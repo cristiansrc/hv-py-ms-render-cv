@@ -1,0 +1,414 @@
+openapi: "3.1.0"
+info:
+  title: hv-py-ms-render-cv API
+  description: |
+    Microservicio de generación de PDFs ATS-friendly para CVs.
+    Utiliza RenderCV como motor de renderizado (YAML → Typst → PDF).
+
+    Consumido exclusivamente por hv-go-ms-resume vía HTTP interno en red Docker.
+  version: "1.0.0"
+  contact:
+    name: cristiansrc
+    url: https://github.com/cristiansrc/hv-py-ms-render-cv
+
+servers:
+  - url: http://localhost:8000
+    description: Desarrollo local
+
+paths:
+  /render:
+    post:
+      operationId: renderCv
+      summary: Generar PDF de CV
+      description: |
+        Genera un PDF ATS-friendly a partir de datos de CV estructurados
+        siguiendo el schema de RenderCV. El PDF se retorna codificado en base64.
+      tags:
+        - render
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RenderRequest"
+            example:
+              cv:
+                name: John Doe
+                email: john.doe@email.com
+                location: San Francisco, CA
+                headline: Senior Software Engineer
+                sections:
+                  experience:
+                    - company: Acme Corp
+                      position: Senior Engineer
+                      start_date: "2023-01"
+                      end_date: present
+                      highlights:
+                        - Led migration to microservices architecture
+                  education:
+                    - institution: MIT
+                      area: Computer Science
+                      degree: BS
+                      start_date: "2015-09"
+                      end_date: "2019-06"
+                locale:
+                  language: english
+                design:
+                  theme: engineeringclassic
+      responses:
+        "200":
+          description: PDF generado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RenderResponse"
+              example:
+                pdf_base64: "JVBERi0xLjQKJeLjz9MKMyAwIG9iago8PC9UeXBlL1BhZ2UvUGFyZW50IDIgMCBS..."
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /health:
+    get:
+      operationId: getHealth
+      summary: Health check
+      description: |
+        Verifica que el servicio está operativo.
+        Usado por Docker healthcheck y orquestadores.
+      tags:
+        - operational
+      security: []
+      responses:
+        "200":
+          description: Servicio saludable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+              example:
+                status: "healthy"
+                timestamp: "2026-05-31T12:00:00Z"
+                version: "1.0.0"
+        "503":
+          description: Servicio no saludable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+              example:
+                status: "unhealthy"
+                timestamp: "2026-05-31T12:00:00Z"
+                version: "1.0.0"
+
+components:
+  schemas:
+    RenderRequest:
+      type: object
+      required:
+        - cv
+      properties:
+        cv:
+          $ref: "#/components/schemas/CvData"
+      additionalProperties: false
+
+    CvData:
+      type: object
+      required:
+        - name
+        - email
+        - sections
+      properties:
+        name:
+          type: string
+          description: Nombre completo
+          minLength: 1
+          maxLength: 200
+          example: "John Doe"
+        email:
+          type: string
+          format: email
+          description: Email de contacto
+          maxLength: 254
+          example: "john.doe@email.com"
+        phone:
+          type: string
+          description: Número de teléfono
+          maxLength: 30
+          example: "+1-555-123-4567"
+        location:
+          type: string
+          description: Ubicación geográfica
+          maxLength: 200
+          example: "San Francisco, CA"
+        headline:
+          type: string
+          description: Título profesional
+          maxLength: 200
+          example: "Senior Software Engineer"
+        photo:
+          type: string
+          description: URL o ruta de la foto
+          maxLength: 2048
+        website:
+          type: string
+          format: uri
+          description: Sitio web personal
+          maxLength: 2048
+          example: "https://johndoe.com"
+        social_networks:
+          type: array
+          items:
+            $ref: "#/components/schemas/SocialNetwork"
+          description: Redes sociales
+          maxItems: 20
+        sections:
+          type: object
+          description: |
+            Secciones del CV. Las claves son títulos de sección y los valores
+            son arrays de entradas. Secciones predefinidas: education, experience,
+            skills, publications, projects, selected_honors, patents, invited_talks.
+            También se permiten secciones custom con cualquier título.
+          additionalProperties: true
+          minProperties: 1
+          example:
+            experience:
+              - company: Acme Corp
+                position: Senior Engineer
+                start_date: "2023-01"
+                end_date: present
+                highlights:
+                  - Led migration to microservices
+            education:
+              - institution: MIT
+                area: Computer Science
+                degree: BS
+                start_date: "2015-09"
+                end_date: "2019-06"
+        locale:
+          $ref: "#/components/schemas/Locale"
+        design:
+          $ref: "#/components/schemas/Design"
+      additionalProperties: false
+
+    SocialNetwork:
+      type: object
+      required:
+        - network
+        - username
+      properties:
+        network:
+          type: string
+          description: Nombre de la red social
+          minLength: 1
+          maxLength: 50
+          example: "LinkedIn"
+        username:
+          type: string
+          description: Nombre de usuario
+          minLength: 1
+          maxLength: 100
+          example: "johndoe"
+      additionalProperties: false
+
+    Locale:
+      type: object
+      properties:
+        language:
+          type: string
+          description: Código de idioma
+          enum:
+            - english
+            - spanish
+            - french
+            - german
+            - italian
+            - portuguese
+            - dutch
+            - danish
+            - russian
+            - turkish
+            - hindi
+            - indonesian
+            - japanese
+            - korean
+            - mandarin_chinese
+          example: "english"
+      additionalProperties: false
+
+    Design:
+      type: object
+      properties:
+        theme:
+          type: string
+          description: Tema de diseño del CV
+          enum:
+            - engineeringclassic
+            - engineeringresumes
+            - moderncv
+            - sb2nov
+          example: "engineeringclassic"
+      additionalProperties: false
+
+    RenderResponse:
+      type: object
+      required:
+        - pdf_base64
+      properties:
+        pdf_base64:
+          type: string
+          description: PDF codificado en base64
+          example: "JVBERi0xLjQKJeLjz9MKMyAwIG9iago8PC9UeXBlL1BhZ2UvUGFyZW50IDIgMCBS..."
+      additionalProperties: false
+
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - timestamp
+        - version
+      properties:
+        status:
+          type: string
+          enum:
+            - healthy
+            - unhealthy
+          description: Estado del servicio
+        timestamp:
+          type: string
+          format: date-time
+          description: Timestamp UTC del health check
+        version:
+          type: string
+          description: Versión del servicio
+          example: "1.0.0"
+      additionalProperties: false
+
+    ApiErrorResponse:
+      type: object
+      required:
+        - timestamp
+        - status
+        - error
+        - code
+        - message
+        - path
+        - trace_id
+        - details
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: Timestamp UTC del error
+        status:
+          type: integer
+          description: Código HTTP de la respuesta
+          minimum: 400
+          maximum: 599
+          example: 400
+        error:
+          type: string
+          description: Nombre del error HTTP
+          example: "Bad Request"
+        code:
+          type: string
+          description: Código estable de negocio o técnico
+          example: "VALIDATION_ERROR"
+        message:
+          type: string
+          description: Mensaje descriptivo del error (no expone detalles internos)
+          example: "The request contains invalid fields."
+        path:
+          type: string
+          description: Path de la request que causó el error
+          example: "/render"
+        trace_id:
+          type: string
+          format: uuid
+          description: Identificador único de la request para correlación
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        details:
+          type: array
+          items:
+            $ref: "#/components/schemas/ApiErrorDetail"
+          description: Lista de detalles de error específicos
+      additionalProperties: false
+
+    ApiErrorDetail:
+      type: object
+      description: |
+        Detalle individual de un error de validación.
+        El campo `field` es opcional: está presente solo cuando el error se asocia a un campo específico.
+        Errores globales (como INTERNAL_ERROR o RENDERCV_USER_ERROR) retornan `details: []`.
+      required:
+        - code
+        - message
+      properties:
+        field:
+          type: string
+          description: Campo que causó el error
+          example: "cv.email"
+        code:
+          type: string
+          description: Código estable del error
+          example: "FIELD_INVALID"
+        message:
+          type: string
+          description: Mensaje descriptivo del error
+          example: "Invalid email format"
+        rejected_value:
+          description: Valor rechazado que causó el error (puede ser cualquier tipo: string, number, boolean, etc.)
+          example: "not-an-email"
+      additionalProperties: false
+
+  responses:
+    BadRequest:
+      description: Error de validación o datos de entrada inválidos
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiErrorResponse"
+          examples:
+            validation_error:
+              summary: Campos inválidos en el payload
+              value:
+                timestamp: "2026-05-31T12:00:00Z"
+                status: 400
+                error: "Bad Request"
+                code: "VALIDATION_ERROR"
+                message: "The request contains invalid fields."
+                path: "/render"
+                trace_id: "550e8400-e29b-41d4-a716-446655440000"
+                details:
+                  - field: "cv.email"
+                    code: "FIELD_INVALID"
+                    message: "Invalid email format"
+                    rejected_value: "not-an-email"
+            user_error:
+              summary: Error de usuario (RenderCV)
+              value:
+                timestamp: "2026-05-31T12:00:00Z"
+                status: 400
+                error: "Bad Request"
+                code: "RENDERCV_USER_ERROR"
+                message: "The CV data is incomplete or invalid."
+                path: "/render"
+                trace_id: "550e8400-e29b-41d4-a716-446655440000"
+                details: []
+
+    InternalError:
+      description: Error interno del servidor
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiErrorResponse"
+          example:
+            timestamp: "2026-05-31T12:00:00Z"
+            status: 500
+            error: "Internal Server Error"
+            code: "INTERNAL_ERROR"
+            message: "An unexpected error occurred."
+            path: "/render"
+            trace_id: "550e8400-e29b-41d4-a716-446655440000"
+            details: []
