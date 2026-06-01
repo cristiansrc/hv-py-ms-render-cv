@@ -69,6 +69,58 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "500":
           $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+
+  /metrics:
+    get:
+      operationId: getMetrics
+      summary: Métricas Prometheus
+      description: |
+        Expone métricas de rendimiento del servicio en formato Prometheus (text/plain).
+        Controlado por la variable de entorno METRICS_ENABLED (default: true).
+        Solo accesible desde red interna Docker.
+      tags:
+        - operational
+      security: []
+      responses:
+        "200":
+          description: Métricas en formato Prometheus
+          content:
+            text/plain:
+              schema:
+                type: string
+                description: Métricas en formato Prometheus text/plain
+              example: |
+                # HELP render_requests_total Total de requests de renderizado
+                # TYPE render_requests_total counter
+                render_requests_total{status="success"} 42
+                render_requests_total{status="error"} 3
+                # HELP render_duration_seconds Duración de requests de renderizado
+                # TYPE render_duration_seconds histogram
+                render_duration_seconds_bucket{le="0.1"} 5
+                render_duration_seconds_bucket{le="0.5"} 20
+                render_duration_seconds_bucket{le="1.0"} 30
+                render_duration_seconds_bucket{le="2.5"} 38
+                render_duration_seconds_bucket{le="5.0"} 41
+                render_duration_seconds_bucket{le="10.0"} 42
+                render_duration_seconds_bucket{le="30.0"} 42
+                render_duration_seconds_bucket{le="+Inf"} 42
+                render_duration_seconds_count 42
+                render_duration_seconds_sum 85.5
+                # HELP render_errors_total Total de errores de renderizado por tipo
+                # TYPE render_errors_total counter
+                render_errors_total{error_type="validation_error"} 1
+                render_errors_total{error_type="user_error"} 1
+                render_errors_total{error_type="internal_error"} 1
+        "503":
+          description: Métricas deshabilitadas (METRICS_ENABLED=false)
+          content:
+            text/plain:
+              schema:
+                type: string
+                description: Mensaje indicando que métricas están deshabilitadas
+              example: "Metrics disabled"
 
   /health:
     get:
@@ -358,8 +410,17 @@ components:
           description: Mensaje descriptivo del error
           example: "Invalid email format"
         rejected_value:
-          description: Valor rechazado que causó el error (puede ser cualquier tipo: string, number, boolean, etc.)
+          description: |
+            Valor rechazado que causó el error. Tipo polimórfico
+            (string, number, boolean, null, object, array).
           example: "not-an-email"
+          oneOf:
+            - type: string
+            - type: number
+            - type: boolean
+            - type: "null"
+            - type: object
+            - type: array
       additionalProperties: false
 
   responses:
@@ -409,6 +470,22 @@ components:
             error: "Internal Server Error"
             code: "INTERNAL_ERROR"
             message: "An unexpected error occurred."
+            path: "/render"
+            trace_id: "550e8400-e29b-41d4-a716-446655440000"
+            details: []
+
+    ServiceUnavailable:
+      description: Servicio no disponible (ej. durante graceful shutdown)
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiErrorResponse"
+          example:
+            timestamp: "2026-05-31T12:00:00Z"
+            status: 503
+            error: "Service Unavailable"
+            code: "SERVICE_UNAVAILABLE"
+            message: "Service is shutting down. Please retry later."
             path: "/render"
             trace_id: "550e8400-e29b-41d4-a716-446655440000"
             details: []

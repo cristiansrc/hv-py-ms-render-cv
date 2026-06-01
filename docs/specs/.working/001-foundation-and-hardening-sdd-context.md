@@ -4,15 +4,15 @@
 **Spec**: `docs/specs/increments/001-foundation-and-hardening.md`
 **Master Spec**: `docs/specs/master-spec.md`
 **OpenAPI**: `docs/api/openapi.yaml`
-**Current Status**: `awaiting-human-plan-approval`
+**Current Status**: `implemented`
 **Created**: 2026-05-31
-**Last Updated**: 2026-05-31
+**Last Updated**: 2026-06-01
 
 ---
 
 ## Current status
 
-`awaiting-human-plan-approval` - Especificación validada por Spec Validator con veredicto `ready`. Pendiente de aprobación humana del plan para proceder a descomposición de tareas.
+`implemented` - Incremento 1 completado. Todos los artefactos de código y documentación están en disco. Task board con 15 tareas en `done`. Pendiente cierre formal del incremento 2.
 
 ## Canonical artifacts
 
@@ -144,12 +144,12 @@ Aprobado por el usuario (cristiansrc) el 2026-05-31. Se autoriza la descomposici
 
 ## Next action
 
-1. ✅ **Human Plan Approval granted** — El usuario ha aprobado el plan.
-2. Enrutar a **Task Decomposer** para crear `docs/specs/tasks/001-foundation-and-hardening-task-board.md`.
-3. Tras task board, enrutar a **Executor** para implementación.
-4. **Hallazgos pendientes que no bloquean implementación**:
-   - **Finding #3** (code drift en `api/core/errors.py`): Se resuelve durante la implementación del incremento (R-002)
-   - **Finding #5** (`technical_debt.md`): Planner debe decidir — crear archivo separado o mantener deuda inline en Master Spec
-   - **Finding #12** (workspace error naming): Documentar como ADR si la divergencia es intencional
-   - **Finding #13** (Graphify stale): Ejecutar `graphify update` post-incremento
-5. **Gate obligatorio**: Spec Validator verificó el bloque `## Human Plan Approval: approved_by_user` — NO existe aún. No autorizar Task Decomposer ni Executor hasta que el usuario apruebe.
+1. ✅ **Incremento 001 cerrado** — Todos los artefactos implementados y verificados en disco.
+2. ✅ **Task board completo** — 15 tareas (T-001 a T-015) en estado `done`.
+3. ✅ **Deuda técnica resuelta** — 4 deudas del incremento 1 marcadas como resueltas en Master Spec.
+4. ⏳ **Incremento 002 pendiente** — Requiere shared context, spec validator approval y human plan approval.
+5. **Hallazgos cerrados**:
+   - **Finding #3** (code drift en `api/core/errors.py`): ✅ Resuelto — el código implementado NO expone `exc.message`.
+   - **Finding #5** (`technical_debt.md`): ✅ No requerido — no hay deuda técnica activa; todas las deudas eran planificadas y resueltas.
+   - **Finding #12** (workspace error naming): ✅ Documentado como ADR en Master Spec sección 11.
+   - **Finding #13** (Graphify stale): ⏳ Pendiente — ejecutar `graphify update` post-incremento 2.

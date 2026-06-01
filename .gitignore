@@ -45,3 +45,15 @@ htmlcov/
 # OS
 .DS_Store
 Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Typst output (generado efímeramente en /tmp, pero por seguridad)
+/tmp/rendercv_output/

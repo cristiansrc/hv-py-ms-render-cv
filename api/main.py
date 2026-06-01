@@ -13,8 +13,10 @@ from api.core.errors import (
     validation_error_handler,
 )
 from api.core.logging import setup_logging
+from api.core.metrics import MetricsMiddleware
 from api.core.trace import TraceMiddleware
 from api.routers.health import router as health_router
+from api.routers.metrics import router as metrics_router
 from api.routers.render import router as render_router
 from rendercv.exception import (
     RenderCVInternalError,
@@ -33,12 +35,14 @@ def create_app() -> FastAPI:
         description="Microservicio de generación de PDFs ATS-friendly para CVs.",
     )
 
-    # Middleware (order matters: trace first)
+    # Middleware (order matters: trace first, then metrics)
     app.add_middleware(TraceMiddleware)
+    app.add_middleware(MetricsMiddleware)
 
     # Routers
     app.include_router(render_router)
     app.include_router(health_router)
+    app.include_router(metrics_router)
 
     # Exception handlers (most specific first)
     app.add_exception_handler(

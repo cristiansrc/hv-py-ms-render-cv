@@ -67,7 +67,7 @@ def _normalize_section_entries(model: Any) -> None:
             continue
         entry_type_name, section_type = get_entry_type_name_and_section_model(entries[0])
         section = {
-            "title": "Normalized Section",
+            "title": title,
             "entry_type": entry_type_name,
             "entries": entries,
         }
