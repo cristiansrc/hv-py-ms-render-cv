@@ -1,0 +1,16 @@
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+addopts = [
+    "--cov=api",
+    "--cov-fail-under=85",
+    "--cov-report=term-missing",
+]
+
+[tool.coverage.run]
+omit = [
+    "api/schemas.py",
+    "api/services/rendercv_service.py",
+    "rendercv/*",
+    "*/__init__.py",
+]
