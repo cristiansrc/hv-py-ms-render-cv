@@ -109,12 +109,13 @@ async def rendercv_user_error_handler(
     request: Request, exc: RenderCVUserError
 ) -> JSONResponse:
     """Handle RenderCVUserError (400 RENDERCV_USER_ERROR)."""
+    message = getattr(exc, "message", None) or "The CV data is incomplete or invalid."
     return _make_error_response(
         request=request,
         status_code=status.HTTP_400_BAD_REQUEST,
         code="RENDERCV_USER_ERROR",
         error="Bad Request",
-        message=getattr(exc, "message", "The CV data is incomplete or invalid."),
+        message=message,
         details=[],
     )
 

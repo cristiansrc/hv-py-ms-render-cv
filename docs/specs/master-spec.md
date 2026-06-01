@@ -2,9 +2,9 @@
 
 **Bounded Context**: CV Rendering
 **Owner**: cristiansrc
-**Lifecycle Status**: `awaiting-human-plan-approval`
+**Lifecycle Status**: `implemented`
 **Created**: 2026-05-31
-**Last Updated**: 2026-05-31
+**Last Updated**: 2026-06-01
 
 ---
 
@@ -216,7 +216,11 @@ RenderCV soporta las siguientes secciones predefinidas:
 ### 8.2 Observabilidad
 - **Logs**: stdout/stderr (estructurados JSON)
 - **Health**: `GET /health`
-- **Métricas**: (pendiente Incremento 2)
+- **Métricas**: `GET /metrics` expone métricas Prometheus:
+  - `render_requests_total` (counter) con labels `status` (success/error)
+  - `render_duration_seconds` (histogram) con buckets `[0.1, 0.5, 1.0, 2.5, 5.0, 10.0, 30.0]` y labels `status`
+  - `render_errors_total` (counter) con labels `error_type` (validation_error, user_error, internal_error)
+- **Graceful Shutdown**: Uvicorn configurado con `--timeout-graceful-shutdown 30`
 
 ### 8.3 Configuración
 | Variable | Default | Descripción |
@@ -224,6 +228,7 @@ RenderCV soporta las siguientes secciones predefinidas:
 | `PORT` | 8000 | Puerto de escucha |
 | `RENDER_TIMEOUT` | 30 | Timeout en segundos para generación PDF |
 | `LOG_LEVEL` | INFO | Nivel de logging |
+| `METRICS_ENABLED` | true | Habilitar endpoint de métricas Prometheus |
 
 ## 9. Estrategia de Tests
 
@@ -242,8 +247,8 @@ RenderCV soporta las siguientes secciones predefinidas:
 
 | # | Nombre | Estado | Descripción |
 |---|---|---|---|
-| 001 | `foundation-and-hardening` | `awaiting-human-plan-approval` | Contratos, error alignment, health, tests, schema validation |
-| 002 | `production-readiness` | `awaiting-human-plan-approval` | Métricas, graceful shutdown, Docker hardening, docs |
+| 001 | `foundation-and-hardening` | `implemented` | Contratos, error alignment, health, tests, schema validation |
+| 002 | `production-readiness` | `implemented` | Métricas, graceful shutdown, Docker hardening, docs |
 
 ## 11. Decisiones Arquitectónicas
 
@@ -257,10 +262,10 @@ RenderCV soporta las siguientes secciones predefinidas:
 
 ## 12. Deuda Técnica
 
-| Deuda | Impacto | Plan de Mitigación | Incremento |
-|---|---|---|---|
-| `RenderRequest` es `dict[str, Any]` sin validación | OpenAPI inútil, errores tardíos | Schema Pydantic estricto en Incremento 1 | 001 |
-| Error response no alineado al workspace | Inconsistencia en manejo de errores | Migrar a `ApiErrorResponse` en Incremento 1 | 001 |
-| Sin tests | Regresiones silenciosas | pytest + httpx en Incremento 1 | 001 |
-| Sin health check | No hay forma de verificar readiness | `GET /health` en Incremento 1 | 001 |
-| Sin métricas | No hay visibilidad de performance | Prometheus metrics en Incremento 2 | 002 |
+| Deuda | Impacto | Plan de Mitigación | Incremento | Estado |
+|---|---|---|---|---|
+| `RenderRequest` es `dict[str, Any]` sin validación | OpenAPI inútil, errores tardíos | Schema Pydantic estricto en Incremento 1 | 001 | ✅ Resuelta |
+| Error response no alineado al workspace | Inconsistencia en manejo de errores | Migrar a `ApiErrorResponse` en Incremento 1 | 001 | ✅ Resuelta |
+| Sin tests | Regresiones silenciosas | pytest + httpx en Incremento 1 | 001 | ✅ Resuelta |
+| Sin health check | No hay forma de verificar readiness | `GET /health` en Incremento 1 | 001 | ✅ Resuelta |
+| Sin métricas | No hay visibilidad de performance | Prometheus metrics en Incremento 2 | 002 | ✅ Resuelta |
